@@ -1,0 +1,18 @@
+import { Router } from "express";
+import { Zone } from "../../types/zone.js";
+import { Photo } from "../../types/photo.js";
+import { adminAuthMiddleware } from "./auth.js";
+
+//NEED TO ACTUALLY IMPLEMENT LATER, FRAMEWORK FINE FOR NOW
+const router = Router();
+
+router.use(adminAuthMiddleware);
+
+router.post("/admin/photos/:id", (req, res) => {
+    const {
+        params: { id }
+    } = req;
+    res.send();
+});
+
+export default router;
