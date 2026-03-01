@@ -5,6 +5,7 @@ import zoneRouter from './api/zones.js';
 import photoRouter from './api/photos.js';
 import adminPhotoRouter from './api/admin/photos.js';
 import cors from 'cors';
+import userRouter from './api/users.js';
 
 dotenv.config();
 
@@ -33,6 +34,8 @@ app.use('/api', zoneRouter);
 app.use('/api', photoRouter);
 // Mount the routes from admin/photos.ts under /api
 app.use('/api/admin', adminPhotoRouter);
+// Mount the routes from users.ts under /api
+app.use('/api', userRouter);
 
 
 app.listen(PORT, () => {

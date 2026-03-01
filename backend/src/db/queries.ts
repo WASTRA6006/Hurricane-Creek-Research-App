@@ -50,3 +50,22 @@ export async function updatePhotoStatus(id: number, status: string) {
     }
 }
 
+export async function getUserByEmail(email: string) {
+    try{
+        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        return result.rows[0];
+    }catch (error) {
+        console.error('Error while retrieving user by email');
+        throw error;
+    }
+}
+
+export async function createUser(user: { name: string; email: string; password_hash: string, role: string }) {
+    try{
+        const result = await pool.query('INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, email, name, created_at', [user.name, user.email, user.password_hash, user.role || 'viewer']);
+        return result.rows[0];
+    }catch (error) {
+        console.error('Error while creating user');
+        throw error;
+    }
+}
