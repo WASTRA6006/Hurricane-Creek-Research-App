@@ -1,4 +1,4 @@
-export type PhotoStatus = "active" | "hidden";
+export type PhotoStatus = "active" | "hidden" | "flagged";
 
 export type Photo = {
   id: number;

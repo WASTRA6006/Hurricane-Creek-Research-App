@@ -1,15 +1,21 @@
 import dotenv from 'dotenv';
 import express from 'express';
-import statusRouter from './api/status';
-import zoneRouter from './api/zones';
-import photoRouter from './api/photos';
-import adminPhotoRouter from './api/admin/photos';
+import statusRouter from './api/status.js';
+import zoneRouter from './api/zones.js';
+import photoRouter from './api/photos.js';
+import adminPhotoRouter from './api/admin/photos.js';
+import cors from 'cors';
 
 dotenv.config();
 
 const app = express();
 
 app.use(express.json());
+
+app.use(cors({
+  origin: 'http://localhost:3001',  // Allow requests from frontend
+  credentials: true
+}));
 
 app.use((req, res, next) => {
   const now = new Date();
@@ -26,7 +32,7 @@ app.use('/api', zoneRouter);
 // Mount the routes from zones.ts under /api
 app.use('/api', photoRouter);
 // Mount the routes from admin/photos.ts under /api
-app.use('/api', adminPhotoRouter);
+app.use('/api/admin', adminPhotoRouter);
 
 
 app.listen(PORT, () => {
