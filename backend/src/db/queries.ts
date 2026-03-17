@@ -12,7 +12,7 @@ export async function getZones() {
 
 export async function getAllPhotos(limit: number = 50, offset: number = 0) {
      try{
-        const result = await pool.query('SELECT * FROM photos ORDER BY created_at DESC LIMIT $1 OFFSET $2', [limit, offset]);
+        const result = await pool.query('SELECT photos.*, users.name as uploader_name FROM photos LEFT JOIN users ON photos.user_id = users.id ORDER BY created_at DESC LIMIT $1 OFFSET $2', [limit, offset]);
         return result.rows;
     } catch (error) {
         console.error('Error while retrieving photos');

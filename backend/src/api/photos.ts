@@ -4,6 +4,7 @@ import { getAllPhotos } from "../db/queries.js";
 import { getPhotoById } from "../db/queries.js";
 import { createPhoto } from "../db/queries.js";
 import { adminAuthMiddleware } from './admin/auth.js';
+import cloudinary from "../config/cloudinary.js";
 
 const router = Router();
 
@@ -36,7 +37,23 @@ router.get("/photos/:id", adminAuthMiddleware, async (req, res) => {
 router.post("/photos", async (req, res) => {
     console.log("createPhoto endpoint hit with body:", req.body);
     try {
-      const photo = await createPhoto(req.body);
+      //Extract image data and other photo data from the request body
+      const {image_data, ...photoData} = req.body;
+      //Validate size
+      const sizeInBytes = (image_data.length *3) / 4; // Base64 to bytes
+      const sizeInMB = sizeInBytes / (1024 * 1024);
+      if (sizeInMB > 10) {
+        return res.status(400).json({ message: "Image size exceeds 10MB limit" });
+      }
+      //Upload the image to Cloudinary
+      const uploadResult = await cloudinary.uploader.upload(image_data, {
+        folder: "hurricane-creek-photos",
+      });
+      //Create photo with Cloudinary URL
+      const photo = await createPhoto({
+        ...photoData,
+        image_url: uploadResult.secure_url,
+      });
       res.status(201).json(photo);
     } catch (error) {
       console.error("Error creating photo:", error);

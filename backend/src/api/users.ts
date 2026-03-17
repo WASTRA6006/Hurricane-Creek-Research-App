@@ -28,4 +28,31 @@ router.post("/users/register", async (req, res) => {
     }
 });
 
+router.post("/users/login", async (req, res) => {
+    console.log("login endpoint hit");
+    try {
+        //Login logic
+        const { email, password } = req.body;
+        //Check if both values are provided
+        if (!email || !password) {
+            return res.status(400).json({ message: "Email and password are required" });
+        }
+        //Get the user by email and check if they exist
+        const user = await getUserByEmail(email);
+        if (!user) {
+            return res.status(401).json({ message: "Invalid email or password" });
+        }
+        //Compare the provided password with the stored hash and continue if it matches
+        const passwordCheck = await bcrypt.compare(password, user.password_hash);
+        if (!passwordCheck) {
+            return res.status(401).json({ message: "Invalid email or password" });
+        }
+        //If all the above is successful, return the user data
+        res.status(200).json({ id: user.id, email: user.email, name: user.name });
+    } catch (error) {
+        console.error("Error logging in user:", error);
+        res.status(500).json({ message: "Failed to log in user" });
+    }
+});
+
 export default router;
