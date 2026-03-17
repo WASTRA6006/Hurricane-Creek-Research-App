@@ -5,12 +5,14 @@ import zoneRouter from './api/zones.js';
 import photoRouter from './api/photos.js';
 import adminPhotoRouter from './api/admin/photos.js';
 import cors from 'cors';
+import userRouter from './api/users.js';
 
 dotenv.config();
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 app.use(cors({
   origin: 'http://localhost:3001',  // Allow requests from frontend
@@ -33,6 +35,8 @@ app.use('/api', zoneRouter);
 app.use('/api', photoRouter);
 // Mount the routes from admin/photos.ts under /api
 app.use('/api/admin', adminPhotoRouter);
+// Mount the routes from users.ts under /api
+app.use('/api', userRouter);
 
 
 app.listen(PORT, () => {

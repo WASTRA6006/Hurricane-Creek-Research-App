@@ -12,6 +12,18 @@ export default function UploadPage() {
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
+
+  //Check if user is logged in, if not redirect to login page
+  useEffect(() => {
+    const userData = localStorage.getItem('userData');
+    if (!userData) {
+      window.location.href = '/login';
+      return;
+    }
+    const user = JSON.parse(userData);
+    setUserId(user.id);
+  }, []);
 
   // Fetch zones from backend on component mount
   useEffect(() => {
@@ -49,20 +61,32 @@ export default function UploadPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); //This will prevent page refresh
     
-    if (!selectedZone || !selectedCategory) {
+    if (!selectedZone || !selectedCategory || !selectedImageFile) {
       alert('Missing Required Field(s)');
       return;
     }
 
+    // Function to convert file to base64
+    const fileToBase64 = (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+      });
+    };
+
+    const convertedImageFile = await fileToBase64(selectedImageFile);
+
     const photoData = {
-      user_id: 1, // Placeholder user ID, figure out User ID's later
+      user_id: userId,
       zone_id: parseInt(selectedZone),
       category: selectedCategory,
       notes: writtenNotes || null,
       gps_allowed: gpsAllowed,
       latitude: latitude,
       longitude: longitude,
-      image_url: 'placeholder.jpg' // Placeholder image URL, will need to handle actual file upload later
+      image_data: convertedImageFile
     };
 
     console.log('Sending to backend:', photoData);
@@ -143,6 +167,31 @@ export default function UploadPage() {
         </div>
 
         <div>
+          <label className="block mb-1 font-medium">Image:</label>
+          <input
+            className="w-full border border-gray-300 p-2 rounded"
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setSelectedImageFile(file);
+              }
+            }}
+          />
+        </div>
+
+        {selectedImageFile && (
+          <div className="mt-2">
+            <img 
+              src={URL.createObjectURL(selectedImageFile)}
+              alt="Preview" 
+              className="max-w-xs rounded border"
+            />
+          </div>
+        )}
+
+        <div>
           <label className="block mb-1 font-medium">Notes:</label>
           <textarea
             className="w-full border border-gray-300 p-2 rounded"
@@ -162,21 +211,6 @@ export default function UploadPage() {
             />
             <span>Include GPS coordinates</span>
           </label>
-        </div>
-
-        <div>
-          <label className="block mb-1 font-medium">Image:</label>
-          <input
-            className="w-full border border-gray-300 p-2 rounded"
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                setSelectedImageFile(file);
-              }
-            }}
-          />
         </div>
 
         {/* Submit button */}
