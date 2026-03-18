@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getApiUrl } from '@/lib/api';
 
 export default function AdminPhotosPage() {
   const [photos, setPhotos] = useState<any[]>([]);
@@ -32,7 +33,7 @@ export default function AdminPhotosPage() {
 
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:3000/api/photos', {
+        const response = await fetch(`${getApiUrl()}/api/photos`, {
           headers: {
             'x-admin-key': adminKey
           }
@@ -74,7 +75,7 @@ export default function AdminPhotosPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/admin/photos/${photoId}/status`, {
+      const response = await fetch(`${getApiUrl()}/api/admin/photos/${photoId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -227,7 +228,7 @@ const handleSearch = () => {
 
   // Fetch zones from backend on component mount
   useEffect(() => {
-    fetch('http://localhost:3000/api/zones')
+    fetch(`${getApiUrl()}/api/zones`)
       .then(response => response.json())
       .then(data => {
         console.log('Zones fetched:', data);
