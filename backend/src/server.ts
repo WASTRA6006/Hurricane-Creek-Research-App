@@ -14,8 +14,22 @@ const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+const allowedOrigins = [
+  'http://localhost:3001',  // Local dev
+  process.env.FRONTEND_URL   // Production (will add to Railway variables)
+];
+
 app.use(cors({
-  origin: 'http://localhost:3001',  // Allow requests from frontend
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 
