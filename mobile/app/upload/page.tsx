@@ -1,6 +1,7 @@
 'use client'; 
 
 import { useState, useEffect } from 'react';
+import { getApiUrl } from '@/lib/api';
 
 export default function UploadPage() {
   
@@ -27,7 +28,7 @@ export default function UploadPage() {
 
   // Fetch zones from backend on component mount
   useEffect(() => {
-    fetch('http://localhost:3000/api/zones')
+    fetch(`${getApiUrl()}/api/zones`)
       .then(response => response.json())
       .then(data => {
         console.log('Zones fetched:', data);
@@ -92,7 +93,7 @@ export default function UploadPage() {
     console.log('Sending to backend:', photoData);
 
     try{
-      const response = await fetch('http://localhost:3000/api/photos', {
+      const response = await fetch(`${getApiUrl()}/api/photos`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
