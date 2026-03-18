@@ -1,5 +1,6 @@
 import pg from 'pg';
 import dotenv from 'dotenv';
+import { getApiUrl } from '@/lib/api';
 
 dotenv.config();
 

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getApiUrl } from '@/lib/api';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -18,7 +19,7 @@ export default function LoginPage() {
     }
 
     try{
-      const response = await fetch('http://localhost:3000/api/users/login', {
+      const response = await fetch(`${getApiUrl()}/api/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
