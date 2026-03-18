@@ -3,6 +3,10 @@ DROP TABLE IF EXISTS photos;
 DROP TABLE IF EXISTS zones;
 DROP TABLE IF EXISTS users;
 
+DROP TYPE IF EXISTS user_role;
+DROP TYPE IF EXISTS photo_status;
+DROP TYPE IF EXISTS photo_category;
+
 CREATE TYPE user_role AS ENUM ('admin', 'viewer');
 CREATE TYPE photo_status AS ENUM ('active', 'hidden', 'flagged');
 CREATE TYPE photo_category AS ENUM ('landscape', 'portrait', 'wildlife', 'macro');
@@ -11,7 +15,9 @@ CREATE TABLE users (
   id            BIGSERIAL PRIMARY KEY,
   email         TEXT NOT NULL UNIQUE,
   role          user_role NOT NULL,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  name          VARCHAR(255),
+  password_hash VARCHAR(255)
 );
 
 CREATE TABLE zones (
@@ -35,7 +41,7 @@ CREATE TABLE photos (
   CONSTRAINT gps_consistency CHECK (
     (gps_allowed = FALSE AND latitude IS NULL AND longitude IS NULL)
     OR
-    (gps_allowed = TRUE  AND latitude IS NOT NULL AND longitude IS NOT NULL)
+    (gps_allowed = TRUE AND latitude IS NOT NULL AND longitude IS NOT NULL)
   )
 );
 
@@ -54,3 +60,8 @@ CREATE INDEX idx_photos_status ON photos(status);
 CREATE INDEX idx_audit_created_at ON audit_logs(created_at DESC);
 CREATE INDEX idx_audit_actor ON audit_logs(actor_user_id);
 CREATE INDEX idx_audit_target ON audit_logs(target_photo_id);
+
+INSERT INTO zones (name) VALUES 
+  ('Parking'),
+  ('Restoration Site'),
+  ('Chestnuts');
