@@ -13,6 +13,7 @@ export default function DashboardPage() {
     const userData = localStorage.getItem('userData');
     if (!userData) {
       window.location.href = '/login';
+      return;
     }
 
     //Get user name from local storage
