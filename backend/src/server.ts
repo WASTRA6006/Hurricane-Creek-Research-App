@@ -6,7 +6,6 @@ import photoRouter from './api/photos.js';
 import adminPhotoRouter from './api/admin/photos.js';
 import cors from 'cors';
 import userRouter from './api/users.js';
-import { getApiUrl } from '@/lib/api';
 
 dotenv.config();
 
