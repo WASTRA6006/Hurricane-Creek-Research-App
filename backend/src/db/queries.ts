@@ -69,3 +69,13 @@ export async function createUser(user: { name: string; email: string; password_h
         throw error;
     }
 }
+
+export async function getUserRoleByEmail(email: string) {
+    try{
+        const result = await pool.query('SELECT role FROM users WHERE email = $1', [email]);
+        return result.rows[0]?.role;
+    }catch (error) {
+        console.error('Error while retrieving user role by email');
+        throw error;
+    }
+}

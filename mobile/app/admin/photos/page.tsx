@@ -21,27 +21,25 @@ export default function AdminPhotosPage() {
   
   //Fetch photos from backend API, redirect to login if not logged in or invalid key, set photos state if successful
   const fetchPhotos = async () => {
-      const adminKey = localStorage.getItem('adminKey');
-
-      if (!adminKey) {
-        console.log('Not logged in, redirecting to login page');
+      const adminData = localStorage.getItem('adminData');
+      if (!adminData) {
         window.location.href = '/admin/login';
         return;
       }
-      
-      console.log('Logged in with key:', adminKey);
+      const admin = JSON.parse(adminData);
+      const adminEmail = admin.email;
 
       try {
         setLoading(true);
         const response = await fetch(`${getApiUrl()}/api/photos`, {
           headers: {
-            'x-admin-key': adminKey
+            'x-admin-email': adminEmail
           }
         });
 
         if (response.status === 403) {
           // Invalid admin key
-          localStorage.removeItem('adminKey');
+          localStorage.removeItem('adminData');
           window.location.href = '/admin/login';
           return;
         }
@@ -66,20 +64,20 @@ export default function AdminPhotosPage() {
 
   //Handle status change for photos, send PATCH request to backend API, refresh photos after successful update
   const handleStatusChange = async (photoId: number, newStatus: string) => {
-    const adminKey = localStorage.getItem('adminKey');
-    
-    if (!adminKey) {
-      alert('Not logged in');
+    const adminData = localStorage.getItem('adminData');
+    if (!adminData) {
       window.location.href = '/admin/login';
       return;
     }
+    const admin = JSON.parse(adminData);
+    const adminEmail = admin.email;
 
     try {
       const response = await fetch(`${getApiUrl()}/api/admin/photos/${photoId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-admin-key': adminKey
+          'x-admin-email': adminEmail
         },
         body: JSON.stringify({ status: newStatus })
       });
@@ -226,6 +224,18 @@ const handleSearch = () => {
   </div>
   );
 
+  //Redirect user if not logged in
+  useEffect(() => {
+    const adminData = localStorage.getItem('adminData');
+    if (!adminData) {
+      window.location.href = '/admin/login';
+      return;
+    }
+    
+    // If logged in, fetch photos
+    fetchPhotos();
+  }, []);
+
   // Fetch zones from backend on component mount
   useEffect(() => {
     fetch(`${getApiUrl()}/api/zones`)
@@ -249,6 +259,14 @@ const handleSearch = () => {
   }
   }, [selectedPhoto]);
 
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    );
+  }
   return (
     // Page background - subtle gradient (less white)
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-primary-light/20 to-secondary-light/20 p-8">
@@ -411,15 +429,26 @@ const handleSearch = () => {
           filteredPhotos.map((photo) => (
             
             // Photo card
-            <div key={photo.id} className="border-2 border-slate-300 rounded-lg overflow-hidden hover:shadow-xl hover:border-primary/50 transition-all duration-300 bg-gradient-to-b from-slate-50 to-white opacity-0 animate-fadeIn">
-
+            <div 
+              key={photo.id} 
+              className={`border-2 rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 bg-gradient-to-b from-slate-50 to-white opacity-0 animate-fadeIn ${
+                photo.status === 'flagged' 
+                  ? 'border-amber-500 hover:border-amber-600' 
+                  : 'border-slate-300 hover:border-primary/50'
+              }`}
+            >
               {/* Image container - maintains 4:3 aspect ratio */}
-              <div className="w-full aspect-[4/3] bg-slate-100 overflow-hidden cursor-pointer" onClick={() => setSelectedPhoto(photo)}>
+              <div className="w-full aspect-[4/3] bg-slate-100 overflow-hidden cursor-pointer relative" onClick={() => setSelectedPhoto(photo)}>
                 <img 
                   src={photo.image_url} 
                   alt={photo.category}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
+                {photo.status === 'flagged' && (
+                  <div className="absolute top-0 right-0 bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg shadow-md">
+                    FLAGGED
+                  </div>
+                )}
               </div>
               
               {/* Divider - using config colors */}

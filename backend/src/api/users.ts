@@ -1,6 +1,6 @@
 import { Router } from "express";
 import bcrypt from 'bcrypt'; 
-import { createUser, getUserByEmail } from '../db/queries.js';
+import { createUser, getUserByEmail, getUserRoleByEmail } from '../db/queries.js';
 
 const router = Router();
 
@@ -52,6 +52,29 @@ router.post("/users/login", async (req, res) => {
     } catch (error) {
         console.error("Error logging in user:", error);
         res.status(500).json({ message: "Failed to log in user" });
+    }
+
+
+});
+
+router.get("/users/adminCheck", async (req, res) => {
+    console.log("admin check endpoint hit");
+
+     const email = req.query.email as string;
+  
+    if (!email) {
+        return res.status(400).json({ message: "Email required" });
+    }
+    try {
+        const role = await getUserRoleByEmail(email);
+        if (role === 'admin') {
+            res.status(200).json({ isAdmin: true });
+        } else {
+            res.status(200).json({ isAdmin: false });
+        }
+    } catch (error) {
+        console.error("Error checking admin status:", error);
+        res.status(500).json({ message: "Failed to check admin status" });
     }
 });
 

@@ -7,6 +7,7 @@ import { getApiUrl } from '@/lib/api';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [forgotPasswordModal, setForgotPasswordModal] = useState<boolean>(false);
   const router = useRouter();
 
 
@@ -46,7 +47,7 @@ export default function LoginPage() {
       
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
-          <label className="block mb-1 font-medium">Email</label>
+          <label className="block mb-1 font-medium">UNG Email</label>
           <input
             type="email"
             className="w-full border border-gray-300 p-2 rounded"
@@ -70,6 +71,51 @@ export default function LoginPage() {
         >
           Login
         </button>
+
+        <button
+        type="button"
+        className="w-full bg-blue-600 text-white p-2 rounded font-medium"
+        onClick={() => router.push('/register')}
+        >
+          Register
+        </button>
+
+        <button
+        type="button"
+        className="text-sm text-blue-600 hover:underline cursor-pointer"
+        onClick={() => setForgotPasswordModal(true)}
+        >
+          Forgot Password?
+        </button>
+        {forgotPasswordModal && (
+          <div 
+            className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+            onClick={() => setForgotPasswordModal(false)}
+          >
+            <div 
+              className="relative bg-white rounded-xl p-8 max-w-md w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setForgotPasswordModal(false)} 
+                className="absolute top-4 right-4 text-2xl text-slate-700 hover:text-slate-900"
+              >
+                ✕
+              </button>
+              
+              <h2 className="text-xl font-bold mb-4">So, you forgot your password?</h2>
+              <p className="text-slate-700">
+                Here are the steps to reset your password:
+                <ol className="list-decimal list-inside mt-2">
+                  <li>Email an administrator to request a password reset. Your username should be the same as your UNG email.</li>
+                  <li>The administrator will then send you a temporary password. Time periods for this process depend entirely on administrator availability.</li>
+                  <li>Use the temporary password to log in and change your password.</li>
+                </ol>
+              </p>
+            </div>
+          </div>
+        )}
+
       </form>
     </div>
   );

@@ -4,7 +4,6 @@ import { Photo } from "../../types/photo.js";
 import { adminAuthMiddleware } from "./auth.js";
 import { updatePhotoStatus } from "../../db/queries.js";
 
-//NEED TO ACTUALLY IMPLEMENT LATER, FRAMEWORK FINE FOR NOW
 const router = Router();
 
 router.use(adminAuthMiddleware);
