@@ -37,23 +37,22 @@ export default function UploadPage() {
       .catch(error => console.error('Error fetching zones:', error));
   }, []);
 
-  // Attempt to get GPS coordinates on component mount
   useEffect(() => {
-    if (navigator.geolocation) {
+    const gpsEnabled = localStorage.getItem('gpsEnabled');
+    
+    if (gpsEnabled === 'true' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setLatitude(position.coords.latitude);
           setLongitude(position.coords.longitude);
-          setGpsAllowed(true);  
-          console.log('GPS enabled:', position.coords.latitude, position.coords.longitude);
+          setGpsAllowed(true);
         },
         (error) => {
-          console.log('GPS denied or unavailable:', error.message);
+          console.log('GPS denied:', error.message);
           setGpsAllowed(false);
         }
       );
     } else {
-      console.log('Browser does not support geolocation');
       setGpsAllowed(false);
     }
   }, []);
