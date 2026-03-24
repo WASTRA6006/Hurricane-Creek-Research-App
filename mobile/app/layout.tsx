@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
+import SplashScreen from "@/components/SplashScreen";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -19,9 +20,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={poppins.className}>
-          
+      <body className={poppins.className}>
+        <SplashScreen />
         {children}
       </body>
     </html>
