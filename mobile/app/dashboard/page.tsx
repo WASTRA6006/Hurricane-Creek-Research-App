@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [memberSince, setMemberSince] = useState('');
+  const [showUnderConstruction, setShowUnderConstruction] = useState(false);
   const router = useRouter();
   
   // Load saved GPS preference on mount
@@ -149,7 +150,7 @@ export default function DashboardPage() {
           </button>
 
           <button 
-            onClick={() => router.push('/my-uploads')}
+            onClick={() => setShowUnderConstruction(true)}
             className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-4 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all flex items-center justify-between group"
           >
             <span>🖼️ My Uploads</span>
@@ -196,6 +197,39 @@ export default function DashboardPage() {
         </div>
 
       </div>
+      {/* Under Construction Modal */}
+      {showUnderConstruction && (
+        <div 
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowUnderConstruction(false)}
+        >
+          <div 
+            className="relative bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setShowUnderConstruction(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"
+            >
+              ✕
+            </button>
+            
+            <div className="text-center">
+              <div className="text-6xl mb-4">🚧</div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">Under Construction</h2>
+              <p className="text-gray-600 mb-6">
+                The "My Uploads" feature is currently being developed. We apologize for the inconvenience.
+              </p>
+              <button
+                onClick={() => setShowUnderConstruction(false)}
+                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition-all"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

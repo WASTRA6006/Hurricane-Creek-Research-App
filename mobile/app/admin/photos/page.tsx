@@ -509,9 +509,9 @@ const handleSearch = () => {
                 </p>
                 
                 {/* Notes */}
-                <div className="text-base">
+                <div className="text-sm pt-2 border-t border-gray-100">
                   <strong className="text-slate-700 font-semibold">Notes:</strong>
-                  <p className="text-slate-600 mt-1 line-clamp-2">
+                  <p className="text-slate-600 mt-1 text-sm line-clamp-2 break-words">
                     {photo.notes || 'None'}
                   </p>
                 </div>
@@ -604,7 +604,7 @@ const handleSearch = () => {
                     
                     <div className="col-span-2">
                       <p className="text-sm font-semibold text-slate-500">Notes</p>
-                      <p className="text-base text-slate-800">{selectedPhoto.notes || 'None'}</p>
+                      <p className="text-base text-slate-800 whitespace-pre-wrap break-words">{selectedPhoto.notes || 'None'}</p>
                     </div>
                     
                     <div>

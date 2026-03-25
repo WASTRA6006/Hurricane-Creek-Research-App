@@ -15,6 +15,7 @@ export default function UploadPage() {
   const [longitude, setLongitude] = useState<number | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const router = useRouter();
 
   const categories = [
@@ -75,6 +76,11 @@ export default function UploadPage() {
       return;
     }
 
+    // Prevent double submission
+    if (uploading) return;
+
+    setUploading(true);
+
     const fileToBase64 = (file: File): Promise<string> => {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -110,11 +116,19 @@ export default function UploadPage() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      alert('Photo uploaded successfully!');
-      router.push('/dashboard');
+      alert('✅ Photo uploaded successfully! Your observation has been added to the research site.');
+      
+      // Reset form
+      setSelectedZone('');
+      setSelectedCategory('');
+      setWrittenNotes('');
+      setSelectedImageFile(null);
+      setUploading(false);
+      
     } catch(error) {
       console.error('Error uploading photo:', error);
-      alert('Failed to upload photo. Please try again.');
+      alert('❌ Failed to upload photo. Please check your connection and try again.');
+      setUploading(false);
     }
   };
   
@@ -270,11 +284,25 @@ export default function UploadPage() {
             {/* Submit Button */}
             <button 
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+              disabled={uploading}
+              className={`w-full px-6 py-4 rounded-xl font-semibold shadow-lg transition-all ${
+                uploading 
+                  ? 'bg-gray-400 cursor-not-allowed text-white' 
+                  : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white hover:shadow-xl'
+              }`}
             >
-              Upload to Research Site
+              {uploading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Uploading...
+                </span>
+              ) : (
+                'Upload to Research Site'
+              )}
             </button>
-
           </form>
         </div>
 
