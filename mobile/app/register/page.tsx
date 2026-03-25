@@ -47,6 +47,20 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-emerald-50 to-cyan-50 flex items-center justify-center p-6">
+
+      {/* Back Button */}
+      <div className="absolute top-6 left-6">
+        <button 
+          onClick={() => router.push('/')}
+          className="group flex items-center gap-2 text-cyan-600 hover:text-cyan-700 transition-colors"
+        >
+          <div className="w-8 h-8 rounded-full bg-cyan-100 group-hover:bg-cyan-200 flex items-center justify-center transition-colors">
+            <span className="text-lg">←</span>
+          </div>
+          <span className="font-medium">Back</span>
+        </button>
+      </div>
+
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md border border-gray-100">
         
         {/* Header */}
