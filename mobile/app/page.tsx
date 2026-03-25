@@ -50,7 +50,7 @@ export default function LandingPage() {
         <div className="flex md:flex-col">
         <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-4 md:p-6 text-white flex items-center md:block">
             <div className="text-3xl md:text-5xl md:mb-3">🎓</div>
-            <h2 className="text-xl md:text-2xl font-bold ml-3 md:ml-0">Student Login</h2>
+            <h2 className="text-xl md:text-2xl font-bold ml-3 md:ml-0">User Login</h2>
         </div>
         <div className="p-4 md:p-6 flex-1">
             <p className="text-sm md:text-base text-gray-600 mb-2 md:mb-4">
@@ -72,7 +72,7 @@ export default function LandingPage() {
         <div className="flex md:flex-col">
         <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 md:p-6 text-white flex items-center md:block">
             <div className="text-3xl md:text-5xl md:mb-3">👨‍🏫</div>
-            <h2 className="text-xl md:text-2xl font-bold ml-3 md:ml-0">Faculty Login</h2>
+            <h2 className="text-xl md:text-2xl font-bold ml-3 md:ml-0">Admin Login</h2>
         </div>
         <div className="p-4 md:p-6 flex-1">
             <p className="text-sm md:text-base text-gray-600 mb-2 md:mb-4">
