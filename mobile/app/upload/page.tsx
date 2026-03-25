@@ -300,7 +300,7 @@ export default function UploadPage() {
             </div>
             <div className="p-6">
               <img 
-                src="/Map.png" 
+                src="/map.png" 
                 alt="Hurricane Creek Site Map" 
                 className="w-full h-auto"
               />
