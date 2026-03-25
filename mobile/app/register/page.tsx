@@ -11,9 +11,8 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const router = useRouter();
 
-
   const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault(); //This will prevent page refresh
+    e.preventDefault();
 
     if (name === '' || email === '' || password === '' || confirmPassword === '') {
       alert('Missing Required Field');
@@ -25,14 +24,14 @@ export default function RegisterPage() {
       return;
     }
 
-    try{
+    try {
       const response = await fetch(`${getApiUrl()}/api/users/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ name, email, password })
-      })
+      });
 
       if (!response.ok) {
         throw new Error('Registration failed');
@@ -41,60 +40,99 @@ export default function RegisterPage() {
       const userData = await response.json();
       router.push('/login');
     } catch (error) {
-        console.error("Error registering user:", error);
-        alert('Failed to register user');
-      }
+      console.error("Error registering user:", error);
+      alert('Failed to register user');
+    }
   }
 
   return (
-    <div className="p-8 max-w-md mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Register</h1>
-      
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <div>
-          <label className="block mb-1 font-medium">Name</label>
-          <input
-            type="text"
-            className="w-full border border-gray-300 p-2 rounded"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-emerald-50 to-cyan-50 flex items-center justify-center p-6">
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md border border-gray-100">
+        
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
+          <p className="text-gray-600">Join the Hurricane Creek research community</p>
         </div>
-        <div>
-          <label className="block mb-1 font-medium">Email</label>
-          <input
-            type="email"
-            className="w-full border border-gray-300 p-2 rounded"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Password</label>
-          <input
-            type="password"
-            className="w-full border border-gray-300 p-2 rounded"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        <div>
-          <label className="block mb-1 font-medium">Confirm Password</label>
-          <input
-            type="password"
-            className="w-full border border-gray-300 p-2 rounded"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
+        
+        {/* Form */}
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Full Name
+            </label>
+            <input
+              type="text"
+              placeholder="John Smith"
+              className="w-full border-2 border-gray-200 p-3 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email Address
+            </label>
+            <input
+              type="email"
+              placeholder="JOSMTH1234@ung.edu"
+              className="w-full border-2 border-gray-200 p-3 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              className="w-full border-2 border-gray-200 p-3 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              className="w-full border-2 border-gray-200 p-3 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+          </div>
+
+          <button 
+            type="submit"
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all mt-6"
+          >
+            Create Account
+          </button>
+
+        </form>
+
+        {/* Footer */}
+        <div className="text-center mt-6 pt-6 border-t border-gray-200">
+          <p className="text-sm text-gray-600">
+            Already have an account?{' '}
+            <button
+              onClick={() => router.push('/login')}
+              className="text-blue-600 hover:text-blue-700 font-medium hover:underline"
+            >
+              Sign in
+            </button>
+          </p>
         </div>
 
-        <button 
-          type="submit"
-          className="w-full bg-blue-600 text-white p-2 rounded font-medium"
-        >
-          Register
-        </button>
-      </form>
+      </div>
     </div>
   );
 }
