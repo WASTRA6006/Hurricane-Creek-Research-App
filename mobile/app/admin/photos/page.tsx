@@ -425,13 +425,11 @@ const handleSearch = () => {
               </div>
             </div>
           )}
-          <div className="flex-grow relative">
-            <button className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl pointer-events-none">
-            🔎︎
-            </button>
+          {/* Search Bar */}
+          <div className="flex-1 relative">
             <input
               type="text"
-              placeholder="Search by uploader or notes..."
+              placeholder="Search by uploader..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               onKeyDown={(e) => {
@@ -439,8 +437,11 @@ const handleSearch = () => {
                   handleSearch();
                 }
               }}
-              className="w-full border border-slate-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full border-2 border-gray-200 rounded-xl p-3 pr-12 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all outline-none text-sm md:text-base"
             />
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl pointer-events-none">
+              🔎
+            </div>
           </div>
         </div>
 
