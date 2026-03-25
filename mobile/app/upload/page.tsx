@@ -190,27 +190,28 @@ export default function UploadPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Zone/Habitat <span className="text-red-500">*</span>
               </label>
-              <div className="flex gap-2">
-                <select 
-                  className="flex-1 border-2 border-gray-200 p-3 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
-                  value={selectedZone}
-                  onChange={(e) => setSelectedZone(e.target.value)}
-                >
-                  <option value="">Select a zone...</option>
-                  {zones.map((zone) => (
-                    <option key={zone.id} value={zone.id}>
-                      {zone.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setShowMap(true)}
-                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 py-2 rounded-lg font-medium shadow-md transition-all whitespace-nowrap"
-                >
-                  🗺️ View Map
-                </button>
-              </div>
+              <select 
+                className="w-full border-2 border-gray-200 p-3 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none mb-3"
+                value={selectedZone}
+                onChange={(e) => setSelectedZone(e.target.value)}
+              >
+                <option value="">Select a zone...</option>
+                {zones.map((zone) => (
+                  <option key={zone.id} value={zone.id}>
+                    {zone.name}
+                  </option>
+                ))}
+              </select>
+              
+              {/* View Map Button - Full Width */}
+              <button
+                type="button"
+                onClick={() => setShowMap(true)}
+                className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-4 py-3 rounded-lg font-semibold shadow-md transition-all flex items-center justify-center gap-2"
+              >
+                <span>🗺️</span>
+                <span>View Site Map</span>
+              </button>
             </div>
 
             {/* Category Selection */}
