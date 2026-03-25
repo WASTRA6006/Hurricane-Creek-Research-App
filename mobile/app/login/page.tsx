@@ -10,23 +10,22 @@ export default function LoginPage() {
   const [forgotPasswordModal, setForgotPasswordModal] = useState<boolean>(false);
   const router = useRouter();
 
-
   const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault(); //This will prevent page refresh
+    e.preventDefault();
 
     if (email === '' || password === '') {
       alert('Missing Required Field');
       return;
     }
 
-    try{
+    try {
       const response = await fetch(`${getApiUrl()}/api/users/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password })
-      })
+      });
 
       if (!response.ok) {
         throw new Error('Login failed');
@@ -36,87 +35,115 @@ export default function LoginPage() {
       localStorage.setItem('userData', JSON.stringify(userData));
       router.push('/dashboard');
     } catch (error) {
-        console.error("Error logging in user:", error);
-        alert('Failed to log in user');
-      }
+      console.error("Error logging in user:", error);
+      alert('Failed to log in user');
+    }
   }
 
   return (
-    <div className="p-8 max-w-md mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Student Login</h1>
-      
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <div>
-          <label className="block mb-1 font-medium">UNG Email</label>
-          <input
-            type="email"
-            className="w-full border border-gray-300 p-2 rounded"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-emerald-50 to-cyan-50 flex items-center justify-center p-6">
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md border border-gray-100">
+        
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="text-5xl mb-3">🎓</div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Student Login</h1>
+          <p className="text-gray-600">Access your research account</p>
         </div>
-        <div>
-          <label className="block mb-1 font-medium">Password</label>
-          <input
-            type="password"
-            className="w-full border border-gray-300 p-2 rounded"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+        
+        {/* Form */}
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              UNG Email
+            </label>
+            <input
+              type="email"
+              placeholder="JOSMTH1234@ung.edu"
+              className="w-full border-2 border-gray-200 p-3 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              className="w-full border-2 border-gray-200 p-3 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <button 
+            type="submit"
+            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all mt-6"
+          >
+            Sign In
+          </button>
+
+        </form>
+
+        {/* Footer Links */}
+        <div className="mt-6 space-y-3 text-center">
+          <button
+            type="button"
+            onClick={() => setForgotPasswordModal(true)}
+            className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
+          >
+            Forgot password?
+          </button>
+          
+          <div className="pt-4 border-t border-gray-200">
+            <p className="text-sm text-gray-600">
+              Don't have an account?{' '}
+              <button
+                onClick={() => router.push('/register')}
+                className="text-blue-600 hover:text-blue-700 font-medium hover:underline"
+              >
+                Register here
+              </button>
+            </p>
+          </div>
         </div>
 
-        <button 
-          type="submit"
-          className="w-full bg-blue-600 text-white p-2 rounded font-medium"
-        >
-          Login
-        </button>
-
-        <button
-        type="button"
-        className="w-full bg-blue-600 text-white p-2 rounded font-medium"
-        onClick={() => router.push('/register')}
-        >
-          Register
-        </button>
-
-        <button
-        type="button"
-        className="text-sm text-blue-600 hover:underline cursor-pointer"
-        onClick={() => setForgotPasswordModal(true)}
-        >
-          Forgot Password?
-        </button>
+        {/* Forgot Password Modal */}
         {forgotPasswordModal && (
           <div 
             className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
             onClick={() => setForgotPasswordModal(false)}
           >
             <div 
-              className="relative bg-white rounded-xl p-8 max-w-md w-full"
+              className="relative bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <button 
                 onClick={() => setForgotPasswordModal(false)} 
-                className="absolute top-4 right-4 text-2xl text-slate-700 hover:text-slate-900"
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl font-light transition-colors"
               >
                 ✕
               </button>
               
-              <h2 className="text-xl font-bold mb-4">So, you forgot your password?</h2>
-              <p className="text-slate-700">
-                Here are the steps to reset your password:
-                <ol className="list-decimal list-inside mt-2">
-                  <li>Email an administrator to request a password reset. Your username should be the same as your UNG email.</li>
-                  <li>The administrator will then send you a temporary password. Time periods for this process depend entirely on administrator availability.</li>
-                  <li>Use the temporary password to log in and change your password.</li>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Reset Password</h2>
+              <div className="text-gray-600 space-y-3">
+                <p>To reset your password:</p>
+                <ol className="list-decimal list-inside space-y-2 ml-2">
+                  <li>Contact an administrator via email</li>
+                  <li>Request a password reset (use your UNG email as username)</li>
+                  <li>Wait for a temporary password (timing depends on admin availability)</li>
+                  <li>Log in with the temporary password and change it</li>
                 </ol>
-              </p>
+              </div>
             </div>
           </div>
         )}
 
-      </form>
+      </div>
     </div>
   );
 }

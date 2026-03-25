@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getApiUrl } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 export default function AdminPhotosPage() {
   const [photos, setPhotos] = useState<any[]>([]);
@@ -18,6 +19,7 @@ export default function AdminPhotosPage() {
   const [statusExpanded, setStatusExpanded] = useState<boolean>(true);
   const [filteredPhotos, setFilteredPhotos] = useState<any[]>([]);
   const [activeSearch, setActiveSearch] = useState('');
+  const router = useRouter();
   
   //Fetch photos from backend API, redirect to login if not logged in or invalid key, set photos state if successful
   const fetchPhotos = async () => {
@@ -269,15 +271,31 @@ const handleSearch = () => {
   }
   return (
     // Page background - subtle gradient (less white)
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-primary-light/20 to-secondary-light/20 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-emerald-50 to-cyan-50 p-8">
       
-      <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-        Admin - Photo Review
-      </h1>
-      
-      <p className="text-slate-600 mb-6">Manage and review submitted photos</p>
+      {/* Header */}
+      <div className="mb-8">
+        <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-2xl shadow-lg p-6 text-white">
+          <h1 className="text-4xl font-bold mb-2">📸 Photo Gallery</h1>
+          <p className="text-emerald-100">Review and manage submitted research photos</p>
+        </div>
+      </div>
 
-      <div className="border-2 border-slate-300 rounded-xl p-6 bg-gradient-to-br from-white via-slate-50 to-primary-light/10 shadow-lg">
+      {/* Back Button */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <button 
+          onClick={() => router.push('/')}
+          className="group flex items-center gap-2 text-emerald-600 hover:text-emerald-700 transition-colors"
+        >
+          <div className="w-8 h-8 rounded-full bg-emerald-100 group-hover:bg-emerald-200 flex items-center justify-center transition-colors">
+            <span className="text-lg">←</span>
+          </div>
+          <span className="font-medium">Back to Home</span>
+        </button>
+      </div>
+
+      {/* Main content container*/}
+      <div className="border-2 border-gray-200 rounded-xl p-6 bg-white shadow-lg">
         {/*Search and Filter*/}
         <div className="relative mb-6 bg-white border-2 border-slate-300 rounded-xl p-6 shadow-sm flex items-center gap-2">
           <button onClick={() => setFiltersOpen(!filtersOpen)} className="bg-neutral text-white px-3 py-2 rounded-md text-[17px] font-medium hover:bg-neutral-dark transition-colors shadow-sm flex items-center gap-1 justify-center">
@@ -330,21 +348,27 @@ const handleSearch = () => {
                 {/* Checkboxes */}
                 {categoryExpanded && (
                   <div className="mt-2 space-y-2">
-                    {['landscape', 'portrait', 'wildlife', 'macro'].map((category) => (
-                      <label key={category} className="flex items-center gap-2 cursor-pointer">
+                    {[
+                      { value: 'plant', label: '🌱 Plant' },
+                      { value: 'animal', label: '🦌 Animal' },
+                      { value: 'fungus', label: '🍄 Fungus' },
+                      { value: 'landscape', label: '🏞️ Landscape' },
+                      { value: 'other', label: '📷 Other' }
+                    ].map((category) => (
+                      <label key={category.value} className="flex items-center gap-2 cursor-pointer">
                         <input 
                           type="checkbox"
-                          checked={selectedCategories.includes(category)}
+                          checked={selectedCategories.includes(category.value)}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setSelectedCategories([...selectedCategories, category]);
+                              setSelectedCategories([...selectedCategories, category.value]);
                             } else {
-                              setSelectedCategories(selectedCategories.filter(cat => cat !== category));
+                              setSelectedCategories(selectedCategories.filter(cat => cat !== category.value));
                             }
                           }}
                           className="w-4 h-4"
                         />
-                        <span className="capitalize">{category}</span>
+                        <span>{category.label}</span>
                       </label>
                     ))}
                   </div>
@@ -388,12 +412,14 @@ const handleSearch = () => {
               <div className="flex gap-2 mt-4 pt-4 border-t border-slate-300">
                 <button 
                   onClick={handleApplyFilters}
-                  className="flex-1 bg-primary text-white px-4 py-2 rounded-md font-medium hover:bg-primary-dark transition-colors">
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                >
                   Apply Filters
                 </button>
                 <button 
                   onClick={handleClearFilters}
-                  className="flex-1 bg-neutral text-white px-4 py-2 rounded-md font-medium hover:bg-neutral-dark transition-colors">
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                >
                   Clear All
                 </button>
               </div>
@@ -458,7 +484,7 @@ const handleSearch = () => {
               <div className="p-4 space-y-2.5 bg-white">
                 <p className="text-base">
                   <strong className="text-slate-700 font-semibold">Zone:</strong> 
-                  <span className="text-slate-600 ml-2">{photo.zone_id}</span>
+                  <span className="text-slate-600 ml-2">{zones.find(z => z.id === photo.zone_id)?.name || photo.zone_id}</span>
                 </p>
 
                 <p className="text-base">
@@ -500,24 +526,24 @@ const handleSearch = () => {
               {/* Divider */}
               <div className="h-0.5 bg-slate-200"></div>
 
-              {/* Buttons - using config colors (harmonious spectrum) */}
+              {/* Buttons */}
               <div className="p-3 flex gap-2 bg-slate-50">
-                {/* Hide - neutral (slate) */}
                 <button 
                   onClick={() => handleStatusChange(photo.id, 'hidden')}
-                  className="flex-1 bg-neutral text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-neutral-dark transition-colors shadow-sm">
+                  className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
                   Hide
                 </button>
-                {/* Flag - secondary (cyan) */}
                 <button 
                   onClick={() => handleStatusChange(photo.id, 'flagged')}
-                  className="flex-1 bg-secondary text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary-dark transition-colors shadow-sm">
+                  className="flex-1 bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
                   Flag
                 </button>
-                {/* Activate - primary (emerald) */}
                 <button 
                   onClick={() => handleStatusChange(photo.id, 'active')}
-                  className="flex-1 bg-primary text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-dark transition-colors shadow-sm">
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
                   Activate
                 </button>
               </div>
@@ -558,7 +584,7 @@ const handleSearch = () => {
                     
                     <div>
                       <p className="text-sm font-semibold text-slate-500">Zone</p>
-                      <p className="text-base text-slate-800">{selectedPhoto.zone_id}</p>
+                      <p className="text-base text-slate-800">{zones.find(z => z.id === selectedPhoto.zone_id)?.name || selectedPhoto.zone_id}</p>
                     </div>
                     
                     <div>
