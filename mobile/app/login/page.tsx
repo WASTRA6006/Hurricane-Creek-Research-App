@@ -13,7 +13,10 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (email === '' || password === '') {
+    //Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+
+    if (normalizedEmail === '' || password === '') {
       alert('Missing Required Field');
       return;
     }
@@ -24,7 +27,7 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email: normalizedEmail, password })
       });
 
       if (!response.ok) {
@@ -61,7 +64,7 @@ export default function LoginPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🎓</div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Student Login</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">User Login</h1>
           <p className="text-gray-600">Access your research account</p>
         </div>
         
