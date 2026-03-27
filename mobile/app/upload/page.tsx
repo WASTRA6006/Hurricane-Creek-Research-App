@@ -16,6 +16,7 @@ export default function UploadPage() {
   const [userId, setUserId] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [lastUpdateTime, setLastUpdateTime] = useState<string>('');
   const router = useRouter();
 
   const categories = [
@@ -47,39 +48,10 @@ export default function UploadPage() {
       .catch(error => console.error('Error fetching zones:', error));
   }, []);
 
-  // Watch GPS position continuously
-useEffect(() => {
-  const gpsEnabled = localStorage.getItem('gpsEnabled');
-  let watchId: number | null = null;
-
-  if (gpsEnabled === 'true' && navigator.geolocation) {
-    // Use watchPosition to continuously track location
-    watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        setLatitude(position.coords.latitude);
-        setLongitude(position.coords.longitude);
-        setGpsAllowed(true);
-      },
-      (error) => {
-        console.log('GPS denied:', error.message);
-        setGpsAllowed(false);
-      },
-      {
-        enableHighAccuracy: true, // Use GPS, not WiFi location
-        maximumAge: 0,            // Don't use cached position
-        timeout: 10000            // 10 second timeout
-      }
-    );
-  } else {
-    setGpsAllowed(false);
-  }
-
-    // Cleanup: stop watching when component unmounts
-    return () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-      }
-    };
+  // Check if GPS is enabled on mount
+  useEffect(() => {
+    const gpsEnabled = localStorage.getItem('gpsEnabled');
+    setGpsAllowed(gpsEnabled === 'true');
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -95,29 +67,53 @@ useEffect(() => {
 
     setUploading(true);
 
-    const fileToBase64 = (file: File): Promise<string> => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = error => reject(error);
-      });
-    };
-
-    const convertedImageFile = await fileToBase64(selectedImageFile);
-
-    const photoData = {
-      user_id: userId,
-      zone_id: parseInt(selectedZone),
-      category: selectedCategory,
-      notes: writtenNotes || null,
-      gps_allowed: gpsAllowed,
-      latitude: latitude,
-      longitude: longitude,
-      image_data: convertedImageFile
-    };
-
     try {
+      // Get fresh GPS coordinates RIGHT NOW if enabled
+      let finalLatitude = null;
+      let finalLongitude = null;
+
+      const gpsEnabled = localStorage.getItem('gpsEnabled');
+      if (gpsEnabled === 'true' && navigator.geolocation) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              maximumAge: 0,
+              timeout: 5000
+            });
+          });
+          
+          finalLatitude = position.coords.latitude;
+          finalLongitude = position.coords.longitude;
+        } catch (gpsError) {
+          console.log('GPS capture failed, uploading without location');
+          // Continue upload without GPS
+        }
+      }
+
+      // Convert image to base64
+      const fileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = error => reject(error);
+        });
+      };
+
+      const convertedImageFile = await fileToBase64(selectedImageFile);
+
+      const photoData = {
+        user_id: userId,
+        zone_id: parseInt(selectedZone),
+        category: selectedCategory,
+        notes: writtenNotes || null,
+        gps_allowed: gpsEnabled === 'true',
+        latitude: finalLatitude,
+        longitude: finalLongitude,
+        image_data: convertedImageFile
+      };
+
       const response = await fetch(`${getApiUrl()}/api/photos`, {
         method: 'POST',
         headers: {
@@ -145,6 +141,9 @@ useEffect(() => {
       setUploading(false);
     }
   };
+  
+
+
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-emerald-50 to-cyan-50 p-6">
