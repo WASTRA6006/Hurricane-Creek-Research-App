@@ -14,7 +14,16 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (name === '' || email === '' || password === '' || confirmPassword === '') {
+    //Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+
+    //Validate UNG email
+    if (!normalizedEmail.endsWith('@ung.edu')) {
+      alert("Only UNG email addresses (@ung.edu) are allowed");
+      return;
+    }
+
+    if (name === '' || normalizedEmail === '' || password === '' || confirmPassword === '') {
       alert('Missing Required Field');
       return;
     }
@@ -30,7 +39,7 @@ export default function RegisterPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email, password })
+        body: JSON.stringify({ name, email: normalizedEmail, password })
       });
 
       if (!response.ok) {

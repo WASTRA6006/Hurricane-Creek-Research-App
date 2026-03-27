@@ -155,6 +155,16 @@ export default function UploadPage() {
           </button>
         </div>
 
+        {/* GPS Timing Warning - Add this RIGHT AFTER the header, BEFORE the upload form */}
+        <div className="bg-amber-50 border-2 border-amber-500 rounded-xl p-4 mb-6">
+          <p className="font-bold text-amber-900 mb-2">📍 Important: GPS Data Timing</p>
+          <p className="text-sm text-amber-800">
+            Your GPS location is captured when you <strong>upload the photo</strong>, 
+            not when you take it. For accurate location data, upload photos after taking them while 
+            still at the research site.
+          </p>
+        </div>
+
         {/* Form */}
         <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
           <form className="space-y-6" onSubmit={handleSubmit}>
