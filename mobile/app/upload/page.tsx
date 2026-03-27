@@ -47,25 +47,39 @@ export default function UploadPage() {
       .catch(error => console.error('Error fetching zones:', error));
   }, []);
 
-  // Check GPS
-  useEffect(() => {
-    const gpsEnabled = localStorage.getItem('gpsEnabled');
-    
-    if (gpsEnabled === 'true' && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLatitude(position.coords.latitude);
-          setLongitude(position.coords.longitude);
-          setGpsAllowed(true);
-        },
-        (error) => {
-          console.log('GPS denied:', error.message);
-          setGpsAllowed(false);
-        }
-      );
-    } else {
-      setGpsAllowed(false);
-    }
+  // Watch GPS position continuously
+useEffect(() => {
+  const gpsEnabled = localStorage.getItem('gpsEnabled');
+  let watchId: number | null = null;
+
+  if (gpsEnabled === 'true' && navigator.geolocation) {
+    // Use watchPosition to continuously track location
+    watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        setLatitude(position.coords.latitude);
+        setLongitude(position.coords.longitude);
+        setGpsAllowed(true);
+      },
+      (error) => {
+        console.log('GPS denied:', error.message);
+        setGpsAllowed(false);
+      },
+      {
+        enableHighAccuracy: true, // Use GPS, not WiFi location
+        maximumAge: 0,            // Don't use cached position
+        timeout: 10000            // 10 second timeout
+      }
+    );
+  } else {
+    setGpsAllowed(false);
+  }
+
+    // Cleanup: stop watching when component unmounts
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

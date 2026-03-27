@@ -275,7 +275,15 @@ export default function AdminPhotosPage() {
       <div className="border-2 border-gray-200 rounded-xl p-6 bg-white shadow-lg">
         {/*Search and Filter*/}
         <div className="relative mb-6 bg-white border-2 border-slate-300 rounded-xl p-6 shadow-sm flex items-center gap-2">
-          <button onClick={(e) => {e.stopPropagation(); setFiltersOpen(!filtersOpen); }} className="bg-neutral text-white px-3 py-2 rounded-md text-[17px] font-medium hover:bg-neutral-dark transition-colors shadow-sm flex items-center gap-1 justify-center">
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              // Tiny delay to prevent race condition with click-outside listener
+              setTimeout(() => setFiltersOpen(prev => !prev), 10);
+            }} 
+            className="bg-neutral text-white px-3 py-2 rounded-md text-[17px] font-medium hover:bg-neutral-dark transition-colors shadow-sm flex items-center gap-1 justify-center"
+          >
             ☰ Filters {filtersOpen ? '▲' : '▼'}
           </button>
           {filtersOpen && (
