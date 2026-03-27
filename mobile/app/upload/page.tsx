@@ -48,10 +48,28 @@ export default function UploadPage() {
       .catch(error => console.error('Error fetching zones:', error));
   }, []);
 
-  // Check if GPS is enabled on mount
+  // Get initial GPS position to show preview
   useEffect(() => {
     const gpsEnabled = localStorage.getItem('gpsEnabled');
     setGpsAllowed(gpsEnabled === 'true');
+    
+    if (gpsEnabled === 'true' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLatitude(position.coords.latitude);
+          setLongitude(position.coords.longitude);
+        },
+        (error) => {
+          console.log('GPS preview failed:', error);
+          setLatitude(null);
+          setLongitude(null);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000
+        }
+      );
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -292,7 +310,11 @@ export default function UploadPage() {
                   <div>
                     <p className="font-medium text-gray-900">GPS Status</p>
                     <p className="text-sm text-gray-600">
-                      {gpsAllowed ? `Location: ${latitude?.toFixed(4)}, ${longitude?.toFixed(4)}` : 'Location services disabled'}
+                      {gpsAllowed 
+                        ? (latitude && longitude 
+                            ? `Preview: ${latitude.toFixed(4)}, ${longitude.toFixed(4)} (updates on upload)` 
+                            : 'Getting location...')
+                        : 'Location services disabled'}
                     </p>
                   </div>
                 </div>
