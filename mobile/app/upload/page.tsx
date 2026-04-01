@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getApiUrl } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import { blob } from 'stream/consumers';
 
 export default function UploadPage() {
   const [zones, setZones] = useState<any[]>([]);
@@ -17,6 +18,7 @@ export default function UploadPage() {
   const [showMap, setShowMap] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [lastUpdateTime, setLastUpdateTime] = useState<string>('');
+  const [compressing, setCompressing] = useState(false);
   const router = useRouter();
 
   const categories = [
@@ -26,6 +28,54 @@ export default function UploadPage() {
     { value: 'landscape', label: 'Landscape', emoji: '🏞️' },
     { value: 'other', label: 'Other', emoji: '📷' }
   ];
+
+  const compressImage = async (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        
+        // ← ADD THIS: Limit max dimensions
+        const MAX_WIDTH = 2048;
+        const MAX_HEIGHT = 2048;
+        
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+          if (width > height) {
+            height = (height / width) * MAX_WIDTH;
+            width = MAX_WIDTH;
+          } else {
+            width = (width / height) * MAX_HEIGHT;
+            height = MAX_HEIGHT;
+          }
+        }
+        
+        canvas.width = width;  // ← CHANGED
+        canvas.height = height; // ← CHANGED
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas not supported'));
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height); // ← CHANGED
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(new File([blob], file.name, { type: 'image/webp' }));
+          } else {
+            reject(new Error('Failed to compress image'));
+          }
+        }, 'image/webp', 0.9);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
 
   //Check if user is logged in
   useEffect(() => {
@@ -209,17 +259,41 @@ export default function UploadPage() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => {
+                  onChange={async (e) => {  // ← ADD async here
                     const file = e.target.files?.[0];
                     if (file) {
-                      setSelectedImageFile(file);
+                      if (file.size > 10 * 1024 * 1024) { // 10 MB
+                        const proceed = confirm(
+                          `This photo is very large (${(file.size / 1024 / 1024).toFixed(1)} MB). ` +
+                          `Compression may take 10-20 seconds. Continue?`
+                        );
+                        if (!proceed) return;
+                      }
+                      setCompressing(true);
+                      try {
+                        // Compress the image first
+                        const compressed = await compressImage(file);  // ← ADD this
+                        setSelectedImageFile(compressed);
+                      } catch (error) {
+                        console.error('Compression failed:', error);
+                        // Fall back to original if compression fails
+                        setSelectedImageFile(file);
+                      } finally {
+                        setCompressing(false); // ← ADD THIS
+                      }
                     }
                   }}
                   className="hidden"
                   id="file-upload"
                 />
                 <label htmlFor="file-upload" className="cursor-pointer">
-                  {selectedImageFile ? (
+                  {compressing ? ( 
+                    <div className="py-8">
+                      <div className="text-6xl mb-3 animate-pulse">⚙️</div>
+                      <p className="text-gray-600 font-medium mb-1">Compressing image...</p>
+                      <p className="text-sm text-gray-500">This may take a few seconds for large photos</p>
+                    </div>
+                  ) : selectedImageFile ? (
                     <div className="space-y-3">
                       <img 
                         src={URL.createObjectURL(selectedImageFile)}
