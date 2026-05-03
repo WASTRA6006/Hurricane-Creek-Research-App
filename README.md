@@ -531,8 +531,8 @@ This project is developed as academic work for UNG and is intended for use by th
 **Primary Stakeholder:**
 - Dr. Ashlee McCaskill - Director, Environmental Leadership Center & Professor, Department of Biology, UNG
 
-**Faculty Support**
--Dr. Abegaz - Primary Faculty Support, Computer Science Professor, UNG
+**Faculty Support:**
+- Dr. Abegaz - Primary Faculty Support, Computer Science Professor, UNG
 
 ## 📞 Support
 
