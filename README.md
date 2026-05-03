@@ -531,12 +531,8 @@ This project is developed as academic work for UNG and is intended for use by th
 **Primary Stakeholder:**
 - Dr. Ashlee McCaskill - Director, Environmental Leadership Center & Professor, Department of Biology, UNG
 
-**Administrative Users:**
-- Stacie James - ELC Staff
-- Karrie Ann Fadroski - ELC Staff
-
-**Technical Consultation:**
-- Tucker - UNG IT Department
+**Faculty Support**
+-Dr. Abegaz - Primary Faculty Support, Computer Science Professor, UNG
 
 ## 📞 Support
 
@@ -549,8 +545,8 @@ For issues, questions, or feature requests related to this project, please conta
 - University of North Georgia Environmental Leadership Center
 - Dr. Ashlee McCaskill for stakeholder guidance and field testing coordination
 - Dr. Wei for academic oversight and project management guidance
-- UNG IT for infrastructure consultation
-- Students participating in field testing and providing valuable feedback
+- Dr. Abegaz for initial introduction to project and guidance throughout
+- Students and Faculty participating in field testing and providing valuable feedback
 
 ---
 
