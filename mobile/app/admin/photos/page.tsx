@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getApiUrl } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
@@ -8,7 +8,6 @@ export default function AdminPhotosPage() {
   const [photos, setPhotos] = useState<any[]>([]);
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [searchText, setSearchText] = useState<string>('');
   const [selectedZones, setSelectedZones] = useState<number[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(['active', 'flagged']);
@@ -18,7 +17,13 @@ export default function AdminPhotosPage() {
   const [categoryExpanded, setCategoryExpanded] = useState<boolean>(true);
   const [statusExpanded, setStatusExpanded] = useState<boolean>(true);
   const [filteredPhotos, setFilteredPhotos] = useState<any[]>([]);
-  const [activeSearch, setActiveSearch] = useState('');
+  const filterPanelRef = useRef<HTMLDivElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalPhotos, setTotalPhotos] = useState(0);
+  const [searchText, setSearchText] = useState<string>('');
+  const [filterTrigger, setFilterTrigger] = useState(0);
+  const [photosPerPage] = useState(25);
   const router = useRouter();
   
   //Fetch photos from backend API, redirect to login if not logged in or invalid key, set photos state if successful
@@ -33,34 +38,57 @@ export default function AdminPhotosPage() {
 
       try {
         setLoading(true);
-        const response = await fetch(`${getApiUrl()}/api/photos`, {
+        
+        // Build URL with filters
+        let url = `${getApiUrl()}/api/admin/photos?page=${currentPage}&limit=${photosPerPage}`;
+        
+        // Add status filter (default to active + flagged if none selected)
+        const statusesToSend = selectedStatuses.length > 0 
+          ? selectedStatuses 
+          : ['active', 'flagged'];
+        url += `&status=${statusesToSend.join(',')}`;
+        
+        // Add zone filter if any selected
+        if (selectedZones.length > 0) {
+          url += `&zones=${selectedZones.join(',')}`;
+        }
+        
+        // Add category filter if any selected
+        if (selectedCategories.length > 0) {
+          url += `&categories=${selectedCategories.join(',')}`;
+        }
+
+        // Add search query if present
+        if (searchText.trim()) {
+          url += `&search=${encodeURIComponent(searchText.trim())}`;
+        }
+        
+        const response = await fetch(url, {
           headers: {
             'x-admin-email': adminEmail
           }
         });
 
         if (response.status === 403) {
-          // Invalid admin key
           localStorage.removeItem('adminData');
           window.location.href = '/admin/login';
           return;
         }
 
         const data = await response.json();
+        
+        setPhotos(data.photos || []);
+        setFilteredPhotos(data.photos || []); // Backend already filtered
+        setTotalPages(data.pagination?.totalPages || 1);
+        setTotalPhotos(data.pagination?.totalPhotos || 0);
+        
         setLoading(false);
-        setPhotos(data);
-        const defaultFiltered = data.filter((photo: any) => 
-          photo.status === 'active' || photo.status === 'flagged'
-        );
-        setFilteredPhotos(defaultFiltered);
-        return data;
+        return data.photos;
       } catch (error) {
         console.error('Error fetching photos:', error);
         setLoading(false);
         setPhotos([]); 
       }
-
-
     };
 
 
@@ -85,33 +113,8 @@ export default function AdminPhotosPage() {
       });
 
       if (response.ok) {
-        const freshPhotos = await fetchPhotos();
-        
-        if (!freshPhotos) return;
-        
-        // Apply filters to fresh data
-        let filtered = freshPhotos;
-        
-        if (activeSearch) {
-          filtered = filtered.filter((photo: any) => 
-            (photo.uploader_name && photo.uploader_name.toLowerCase().includes(activeSearch.toLowerCase())) ||
-            (photo.notes && photo.notes.toLowerCase().includes(activeSearch.toLowerCase()))
-          );
-        }
-        
-        if (selectedZones.length > 0) {
-          filtered = filtered.filter((photo: any) => selectedZones.includes(photo.zone_id));
-        }
-        if (selectedCategories.length > 0) {
-          filtered = filtered.filter((photo: any) => selectedCategories.includes(photo.category));
-        }
-        if (selectedStatuses.length > 0) {
-          filtered = filtered.filter((photo: any) => selectedStatuses.includes(photo.status));
-        }
-        
-        setFilteredPhotos(filtered);
+        fetchPhotos(); // Just refetch, no manual filtering needed
       }
-    
     } catch (error) {
       console.error('Error updating photo status:', error);
     }
@@ -140,67 +143,20 @@ export default function AdminPhotosPage() {
   }
 
   const handleApplyFilters = () => {
-    let filtered = photos;
-    
-    if (activeSearch) {
-      filtered = filtered.filter(photo => 
-        (photo.uploader_name && photo.uploader_name.toLowerCase().includes(activeSearch.toLowerCase())) ||
-        (photo.notes && photo.notes.toLowerCase().includes(activeSearch.toLowerCase()))
-      );
-    }
-
-    if (selectedZones.length > 0) {
-      filtered = filtered.filter(photo => selectedZones.includes(photo.zone_id));
-    }
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter(photo => selectedCategories.includes(photo.category));
-    }
-    if (selectedStatuses.length > 0) {
-      filtered = filtered.filter(photo => selectedStatuses.includes(photo.status));
-    }
-    
-    setFilteredPhotos(filtered);
+    setCurrentPage(1);
+    setFiltersOpen(false);
+    setFilterTrigger(prev => prev + 1);
   };
 
-const handleClearFilters = () => {
-  setSelectedZones([]);
-  setSelectedCategories([]);
-  setSelectedStatuses(['active', 'flagged']);
-  
-  let filtered = photos;
-  
-  if (activeSearch) {
-    filtered = filtered.filter(photo => 
-      (photo.uploader_name && photo.uploader_name.toLowerCase().includes(activeSearch.toLowerCase())) ||
-      (photo.notes && photo.notes.toLowerCase().includes(activeSearch.toLowerCase()))
-    );
-  }
-  
-  filtered = filtered.filter((photo: any) => 
-    photo.status === 'active' || photo.status === 'flagged'
-  );
-  
-  setFilteredPhotos(filtered);
-};
-
-const handleSearch = () => {
-  setActiveSearch(searchText);
-  
-  let filtered = photos;
-  
-  if (searchText) {
-    filtered = filtered.filter(photo => 
-      (photo.uploader_name && photo.uploader_name.toLowerCase().includes(searchText.toLowerCase())) ||
-      (photo.notes && photo.notes.toLowerCase().includes(searchText.toLowerCase()))
-    );
-  }
-
-  if (selectedStatuses.length > 0) {
-    filtered = filtered.filter(photo => selectedStatuses.includes(photo.status));
-  }
-  
-  setFilteredPhotos(filtered);
-};
+  const handleClearFilters = () => {
+    setSelectedZones([]);
+    setSelectedCategories([]);
+    setSelectedStatuses(['active', 'flagged']);
+    setSearchText('');
+    setCurrentPage(1);
+    setFiltersOpen(false);
+    setFilterTrigger(prev => prev + 1);
+  };
 
   const SkeletonCard = () => (
   <div className="border-2 border-slate-300 rounded-lg overflow-hidden animate-pulse">
@@ -260,7 +216,28 @@ const handleSearch = () => {
     document.body.style.overflow = 'unset';
   }
   }, [selectedPhoto]);
+  
+  // Close filters when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterPanelRef.current && !filterPanelRef.current.contains(event.target as Node)) {
+        setFiltersOpen(false);
+      }
+    };
 
+    if (filtersOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [filtersOpen]);
+
+  // Only fetch on page change
+  useEffect(() => {
+    fetchPhotos();
+  }, [currentPage, filterTrigger]);
 
   if (loading) {
     return (
@@ -270,7 +247,7 @@ const handleSearch = () => {
     );
   }
   return (
-    // Page background - subtle gradient (less white)
+    // Page backgrounds
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-emerald-50 to-cyan-50 p-8">
       
       {/* Header */}
@@ -298,11 +275,22 @@ const handleSearch = () => {
       <div className="border-2 border-gray-200 rounded-xl p-6 bg-white shadow-lg">
         {/*Search and Filter*/}
         <div className="relative mb-6 bg-white border-2 border-slate-300 rounded-xl p-6 shadow-sm flex items-center gap-2">
-          <button onClick={() => setFiltersOpen(!filtersOpen)} className="bg-neutral text-white px-3 py-2 rounded-md text-[17px] font-medium hover:bg-neutral-dark transition-colors shadow-sm flex items-center gap-1 justify-center">
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              // Tiny delay to prevent race condition with click-outside listener
+              setTimeout(() => setFiltersOpen(prev => !prev), 10);
+            }} 
+            className="bg-neutral text-white px-3 py-2 rounded-md text-[17px] font-medium hover:bg-neutral-dark transition-colors shadow-sm flex items-center gap-1 justify-center"
+          >
             ☰ Filters {filtersOpen ? '▲' : '▼'}
           </button>
           {filtersOpen && (
-            <div className="absolute top-full left-0 mt-2 text-white bg-neutral border-2 border-slate-100 rounded-lg shadow-2xl z-50 p-6 w-96">
+            <div 
+              ref={filterPanelRef}
+              className="absolute top-full left-0 mt-2 text-white bg-neutral border-2 border-slate-100 rounded-lg shadow-2xl z-50 p-6 w-96"
+            >
               {/* Zone Filters */}
               <div className="mb-4">
                 <div 
@@ -429,12 +417,13 @@ const handleSearch = () => {
           <div className="flex-1 relative">
             <input
               type="text"
-              placeholder="Search by uploader..."
+              placeholder="Search by uploader or notes..."
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  handleSearch();
+                  setCurrentPage(1);
+                  fetchPhotos();
                 }
               }}
               className="w-full border-2 border-gray-200 rounded-xl p-3 pr-12 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all outline-none text-sm md:text-base"
@@ -552,6 +541,44 @@ const handleSearch = () => {
             //End of Photo Card
           )))}
         </div>
+          {/* Pagination Controls */}
+          {!loading && totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-4">
+              {/* Previous Button */}
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  currentPage === 1
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                }`}
+              >
+                ← Previous
+              </button>
+
+              {/* Page Info */}
+              <div className="text-slate-700 font-medium">
+                Page {currentPage} of {totalPages}
+                <span className="text-slate-500 text-sm ml-2">
+                  ({totalPhotos} total photos)
+                </span>
+              </div>
+
+              {/* Next Button */}
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  currentPage === totalPages
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                }`}
+              >
+                Next →
+              </button>
+            </div>
+          )}
           {!loading && filteredPhotos.length === 0 && (
             <div className="text-center py-12 text-slate-500">
               <p className="text-xl font-semibold">No photos found</p>

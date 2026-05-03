@@ -13,7 +13,10 @@ export default function AdminLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (email === '' || password === '') {
+    //Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+
+    if (normalizedEmail === '' || password === '') {
       alert('Missing Required Field');
       return;
     }
@@ -24,7 +27,7 @@ export default function AdminLoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email: normalizedEmail, password })
       });
 
       if (!response.ok) {
@@ -33,7 +36,7 @@ export default function AdminLoginPage() {
 
       if (response.ok) {
         try { 
-          const adminCheckResponse = await fetch(`${getApiUrl()}/api/users/adminCheck?email=${encodeURIComponent(email)}`);
+          const adminCheckResponse = await fetch(`${getApiUrl()}/api/users/adminCheck?email=${encodeURIComponent(normalizedEmail)}`);
           if (!adminCheckResponse.ok) {
             alert('User is not an admin.');
             return;
@@ -74,7 +77,7 @@ export default function AdminLoginPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">👨‍🏫</div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Faculty Login</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Login</h1>
           <p className="text-gray-600">Admin access portal</p>
         </div>
         

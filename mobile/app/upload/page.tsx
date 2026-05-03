@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getApiUrl } from '@/lib/api';
 import { useRouter } from 'next/navigation';
+import { blob } from 'stream/consumers';
 
 export default function UploadPage() {
   const [zones, setZones] = useState<any[]>([]);
@@ -16,6 +17,8 @@ export default function UploadPage() {
   const [userId, setUserId] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [lastUpdateTime, setLastUpdateTime] = useState<string>('');
+  const [compressing, setCompressing] = useState(false);
   const router = useRouter();
 
   const categories = [
@@ -25,6 +28,54 @@ export default function UploadPage() {
     { value: 'landscape', label: 'Landscape', emoji: '🏞️' },
     { value: 'other', label: 'Other', emoji: '📷' }
   ];
+
+  const compressImage = async (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        
+        // ← ADD THIS: Limit max dimensions
+        const MAX_WIDTH = 2048;
+        const MAX_HEIGHT = 2048;
+        
+        let width = img.width;
+        let height = img.height;
+        
+        if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+          if (width > height) {
+            height = (height / width) * MAX_WIDTH;
+            width = MAX_WIDTH;
+          } else {
+            width = (width / height) * MAX_HEIGHT;
+            height = MAX_HEIGHT;
+          }
+        }
+        
+        canvas.width = width;  
+        canvas.height = height; 
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas not supported'));
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height); 
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(new File([blob], file.name, { type: 'image/webp' }));
+          } else {
+            reject(new Error('Failed to compress image'));
+          }
+        }, 'image/webp', 0.9);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
 
   //Check if user is logged in
   useEffect(() => {
@@ -47,24 +98,27 @@ export default function UploadPage() {
       .catch(error => console.error('Error fetching zones:', error));
   }, []);
 
-  // Check GPS
+  // Get initial GPS position to show preview
   useEffect(() => {
     const gpsEnabled = localStorage.getItem('gpsEnabled');
+    setGpsAllowed(gpsEnabled === 'true');
     
     if (gpsEnabled === 'true' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setLatitude(position.coords.latitude);
           setLongitude(position.coords.longitude);
-          setGpsAllowed(true);
         },
         (error) => {
-          console.log('GPS denied:', error.message);
-          setGpsAllowed(false);
+          console.log('GPS preview failed:', error);
+          setLatitude(null);
+          setLongitude(null);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000
         }
       );
-    } else {
-      setGpsAllowed(false);
     }
   }, []);
 
@@ -81,29 +135,53 @@ export default function UploadPage() {
 
     setUploading(true);
 
-    const fileToBase64 = (file: File): Promise<string> => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = error => reject(error);
-      });
-    };
-
-    const convertedImageFile = await fileToBase64(selectedImageFile);
-
-    const photoData = {
-      user_id: userId,
-      zone_id: parseInt(selectedZone),
-      category: selectedCategory,
-      notes: writtenNotes || null,
-      gps_allowed: gpsAllowed,
-      latitude: latitude,
-      longitude: longitude,
-      image_data: convertedImageFile
-    };
-
     try {
+      // Get fresh GPS coordinates RIGHT NOW if enabled
+      let finalLatitude = null;
+      let finalLongitude = null;
+
+      const gpsEnabled = localStorage.getItem('gpsEnabled');
+      if (gpsEnabled === 'true' && navigator.geolocation) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              maximumAge: 0,
+              timeout: 5000
+            });
+          });
+          
+          finalLatitude = position.coords.latitude;
+          finalLongitude = position.coords.longitude;
+        } catch (gpsError) {
+          console.log('GPS capture failed, uploading without location');
+          // Continue upload without GPS
+        }
+      }
+
+      // Convert image to base64
+      const fileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = error => reject(error);
+        });
+      };
+
+      const convertedImageFile = await fileToBase64(selectedImageFile);
+
+      const photoData = {
+        user_id: userId,
+        zone_id: parseInt(selectedZone),
+        category: selectedCategory,
+        notes: writtenNotes || null,
+        gps_allowed: gpsEnabled === 'true',
+        latitude: finalLatitude,
+        longitude: finalLongitude,
+        image_data: convertedImageFile
+      };
+
       const response = await fetch(`${getApiUrl()}/api/photos`, {
         method: 'POST',
         headers: {
@@ -132,6 +210,9 @@ export default function UploadPage() {
     }
   };
   
+
+
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-emerald-50 to-cyan-50 p-6">
       <div className="max-w-3xl mx-auto">
@@ -155,6 +236,16 @@ export default function UploadPage() {
           </button>
         </div>
 
+        {/* GPS Timing Warning - Add this RIGHT AFTER the header, BEFORE the upload form */}
+        <div className="bg-amber-50 border-2 border-amber-500 rounded-xl p-4 mb-6">
+          <p className="font-bold text-amber-900 mb-2">📍 Important: GPS Data Timing</p>
+          <p className="text-sm text-amber-800">
+            Your GPS location is captured when you <strong>upload the photo</strong>, 
+            not when you take it. For accurate location data, upload photos after taking them while 
+            still at the research site.
+          </p>
+        </div>
+
         {/* Form */}
         <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
           <form className="space-y-6" onSubmit={handleSubmit}>
@@ -168,17 +259,41 @@ export default function UploadPage() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => {
+                  onChange={async (e) => {  // ← ADD async here
                     const file = e.target.files?.[0];
                     if (file) {
-                      setSelectedImageFile(file);
+                      if (file.size > 10 * 1024 * 1024) { // 10 MB
+                        const proceed = confirm(
+                          `This photo is very large (${(file.size / 1024 / 1024).toFixed(1)} MB). ` +
+                          `Compression may take 10-20 seconds. Continue?`
+                        );
+                        if (!proceed) return;
+                      }
+                      setCompressing(true);
+                      try {
+                        // Compress the image first
+                        const compressed = await compressImage(file);  // ← ADD this
+                        setSelectedImageFile(compressed);
+                      } catch (error) {
+                        console.error('Compression failed:', error);
+                        // Fall back to original if compression fails
+                        setSelectedImageFile(file);
+                      } finally {
+                        setCompressing(false); // ← ADD THIS
+                      }
                     }
                   }}
                   className="hidden"
                   id="file-upload"
                 />
                 <label htmlFor="file-upload" className="cursor-pointer">
-                  {selectedImageFile ? (
+                  {compressing ? ( 
+                    <div className="py-8">
+                      <div className="text-6xl mb-3 animate-pulse">⚙️</div>
+                      <p className="text-gray-600 font-medium mb-1">Compressing image...</p>
+                      <p className="text-sm text-gray-500">This may take a few seconds for large photos</p>
+                    </div>
+                  ) : selectedImageFile ? (
                     <div className="space-y-3">
                       <img 
                         src={URL.createObjectURL(selectedImageFile)}
@@ -269,7 +384,11 @@ export default function UploadPage() {
                   <div>
                     <p className="font-medium text-gray-900">GPS Status</p>
                     <p className="text-sm text-gray-600">
-                      {gpsAllowed ? `Location: ${latitude?.toFixed(4)}, ${longitude?.toFixed(4)}` : 'Location services disabled'}
+                      {gpsAllowed 
+                        ? (latitude && longitude 
+                            ? `Preview: ${latitude.toFixed(4)}, ${longitude.toFixed(4)} (updates on upload)` 
+                            : 'Getting location...')
+                        : 'Location services disabled'}
                     </p>
                   </div>
                 </div>
