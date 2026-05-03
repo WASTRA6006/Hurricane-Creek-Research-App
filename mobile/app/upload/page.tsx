@@ -53,8 +53,8 @@ export default function UploadPage() {
           }
         }
         
-        canvas.width = width;  // ← CHANGED
-        canvas.height = height; // ← CHANGED
+        canvas.width = width;  
+        canvas.height = height; 
         
         const ctx = canvas.getContext('2d');
         if (!ctx) {
@@ -62,7 +62,7 @@ export default function UploadPage() {
           return;
         }
         
-        ctx.drawImage(img, 0, 0, width, height); // ← CHANGED
+        ctx.drawImage(img, 0, 0, width, height); 
         
         canvas.toBlob((blob) => {
           if (blob) {
