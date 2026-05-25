@@ -113,8 +113,25 @@ CREATE TABLE audit_logs (
 ### Prerequisites
 
 - Node.js 18+ 
-- Docker (for local PostgreSQL)
+- Docker (for local PostgreSQL) - [Download Docker Desktop](https://www.docker.com/products/docker-desktop)
 - npm or yarn
+- A Cloudinary account (free tier) - [Sign up here](https://cloudinary.com)
+
+### Quick Start Checklist
+
+For experienced developers, here's the TL;DR:
+
+- [ ] Clone repo
+- [ ] Start PostgreSQL in Docker
+- [ ] Run database setup SQL (all tables + seed zones + create admin)
+- [ ] Get Cloudinary credentials
+- [ ] Configure `.env` files (backend + frontend)
+- [ ] `npm install` and `npm run dev` (backend on :3000, frontend on :3001)
+- [ ] Login as admin@ung.edu / admin123
+
+**First time? Follow the detailed steps below.**
+
+---
 
 ### Environment Variables
 
@@ -122,7 +139,7 @@ Create `.env` files in both `backend/` and `mobile/` directories.
 
 **Backend `.env`:**
 ```env
-DATABASE_URL=postgresql://user:password@localhost:5432/hurricane_creek_db
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/hurricane_creek_db
 PORT=3000
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
@@ -134,6 +151,31 @@ FRONTEND_URL=http://localhost:3001
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
+
+---
+
+### Cloudinary Setup
+
+**1. Create a free Cloudinary account:**
+- Go to https://cloudinary.com/users/register/free
+- Sign up (no credit card required for free tier)
+
+**2. Get your credentials:**
+- After signing in, you'll see your **Dashboard**
+- Copy your **Cloud Name** (shown at the top)
+- Click **"API Keys"** in the left sidebar (under Programmable Media)
+- Copy your **API Key** and **API Secret**
+
+**3. Add credentials to backend `.env`:**
+```env
+CLOUDINARY_CLOUD_NAME=your_cloud_name_from_dashboard
+CLOUDINARY_API_KEY=your_api_key_from_dashboard
+CLOUDINARY_API_SECRET=your_api_secret_from_dashboard
+```
+
+**Note:** Keep your API Secret private - never commit it to version control.
+
+---
 
 ### Local Development Setup
 
@@ -152,31 +194,151 @@ docker run --name hc-postgres \
   -d postgres:16
 ```
 
-**3. Set up the database schema:**
+**Note:** Remember the password you set - you'll need it for `DATABASE_URL` in your backend `.env` file.
 
-Connect to your PostgreSQL instance and run the schema creation scripts found in the Database Schema section above.
+**3. Set up the database:**
 
-**4. Start Backend:**
+Connect to your PostgreSQL container:
+```bash
+docker exec -it hc-postgres psql -U postgres -d hurricane_creek_db
+```
+
+You should see the PostgreSQL prompt: `hurricane_creek_db=#`
+
+**Now copy and paste each SQL block below:**
+
+**Create Users table:**
+```sql
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  password_hash TEXT NOT NULL,
+  role VARCHAR(50) DEFAULT 'student',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Create Zones table:**
+```sql
+CREATE TABLE zones (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description TEXT
+);
+```
+
+**Create Photos table:**
+```sql
+CREATE TABLE photos (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  zone_id INTEGER REFERENCES zones(id),
+  category VARCHAR(100) NOT NULL,
+  notes TEXT,
+  gps_allowed BOOLEAN DEFAULT false,
+  latitude DECIMAL(10, 8),
+  longitude DECIMAL(11, 8),
+  image_url TEXT NOT NULL,
+  status VARCHAR(50) DEFAULT 'active',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Create Audit Logs table:**
+```sql
+CREATE TABLE audit_logs (
+  id SERIAL PRIMARY KEY,
+  admin_email VARCHAR(255),
+  photo_id INTEGER REFERENCES photos(id),
+  action VARCHAR(100),
+  old_value VARCHAR(100),
+  new_value VARCHAR(100),
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Seed the 6 research zones:**
+```sql
+INSERT INTO zones (name) VALUES
+  ('Creek'),
+  ('Open field'),
+  ('Pine forest'),
+  ('Hardwood forest'),
+  ('Mixed forest'),
+  ('Wetland');
+```
+
+**Create your first admin account:**
+```sql
+-- Default password is 'admin123' - CHANGE THIS AFTER FIRST LOGIN
+INSERT INTO users (email, name, password_hash, role) 
+VALUES (
+  'admin@ung.edu', 
+  'Admin User', 
+  '$2b$10$rKqH8lZjP6vZp0mK.rI9oeqKxM3zQJxQ8vB9fHqYyHqGz3kR1yJKG',
+  'admin'
+);
+```
+
+**Verify your setup:**
+```sql
+-- Check zones (should show 6)
+SELECT * FROM zones;
+
+-- Check admin user (should show 1)
+SELECT id, email, name, role FROM users;
+```
+
+You should see:
+- 6 zones (Creek, Open field, Pine forest, Hardwood forest, Mixed forest, Wetland)
+- 1 admin user (admin@ung.edu with role 'admin')
+
+**Exit PostgreSQL:**
+```sql
+\q
+```
+
+**4. Install backend dependencies and start:**
 ```bash
 cd backend
 npm install
 npm run dev
 ```
 
-The backend will run on `http://localhost:3000`
+The backend API will start on **http://localhost:3000**
 
-**5. Start Frontend:**
+You should see: Server is Successfully Running, and App is listening on port 3000
+
+**5. Install frontend dependencies and start:**
+
+Open a **new terminal window** (keep backend running), then:
+
 ```bash
 cd mobile
 npm install
 npm run dev
 ```
 
-The frontend will run on `http://localhost:3001`
+The frontend will start on **http://localhost:3001**
+
+**Important:** The frontend runs on port **3001** (not 3000) to avoid conflicts with the backend.
 
 **6. Access the application:**
-- Frontend: http://localhost:3001
-- Backend API: http://localhost:3000
+
+- **Student Interface:** http://localhost:3001
+- **Admin Portal:** http://localhost:3001/admin/login
+- **Backend API:** http://localhost:3000
+
+**7. Test the admin login:**
+
+Go to http://localhost:3001/admin/login and use:
+- **Email:** `admin@ung.edu`
+- **Password:** `admin123`
+
+**⚠️ IMPORTANT:** Change the default admin password immediately after first login.
+
+---
 
 ## 📱 User Workflows
 
@@ -318,7 +480,153 @@ git push railway main
 
 ### Database Setup (Railway)
 
-Connect to your Railway PostgreSQL instance and run the schema creation scripts from the Database Schema section.
+Connect to your Railway PostgreSQL instance and run the schema creation scripts from the Database Schema section, followed by the zones seed data and admin account creation.
+
+## 🔧 Troubleshooting
+
+### Backend Issues
+
+**Error:** `Port 3000 already in use`
+
+**Solution:**
+```bash
+# macOS/Linux
+lsof -ti:3000 | xargs kill -9
+
+# Windows (Command Prompt)
+netstat -ano | findstr :3000
+# Note the PID, then:
+taskkill /PID <PID_NUMBER> /F
+```
+
+**Error:** `Error: connect ECONNREFUSED 127.0.0.1:5432`
+
+**Solution:** PostgreSQL container is not running. Start it:
+```bash
+docker start hc-postgres
+# Or check if it exists:
+docker ps -a
+```
+
+---
+
+### Frontend Issues
+
+**Error:** `Failed to fetch` or network errors when uploading
+
+**Solutions:**
+1. Verify backend is running on `http://localhost:3000`
+2. Check `mobile/.env.local` has `NEXT_PUBLIC_API_URL=http://localhost:3000`
+3. Clear browser cache and reload
+4. Check browser console for CORS errors
+
+**Error:** Frontend won't start on port 3001
+
+**Solution:** Update `package.json` in `mobile/` directory:
+```json
+{
+  "scripts": {
+    "dev": "next dev -p 3001"
+  }
+}
+```
+
+---
+
+### Database Issues
+
+**Error:** `relation "users" does not exist`
+
+**Solution:** You haven't run the database setup SQL. Follow step 3 in "Local Development Setup" above.
+
+**Error:** `password authentication failed for user "postgres"`
+
+**Solution:** Check that the password in your `DATABASE_URL` matches the password you set when starting the Docker container (`POSTGRES_PASSWORD`).
+
+**Error:** `database "hurricane_creek_db" does not exist`
+
+**Solution:** Recreate the Docker container with the correct database name:
+```bash
+docker rm -f hc-postgres
+docker run --name hc-postgres \
+  -e POSTGRES_PASSWORD=your_password \
+  -e POSTGRES_DB=hurricane_creek_db \
+  -p 5432:5432 \
+  -d postgres:16
+```
+
+---
+
+### Cloudinary Issues
+
+**Error:** `Cloudinary upload failed` or `Invalid API credentials`
+
+**Solutions:**
+1. Verify credentials in `backend/.env` match your Cloudinary dashboard
+2. Check for spaces or quotes in environment variables (should be plain text)
+3. Restart backend after changing `.env` file
+4. Verify your Cloudinary account is active
+
+**Error:** Image upload hangs or takes forever
+
+**Solution:** This is normal for very large images (10+ MB). The client-side compression can take 10-20 seconds. A loading indicator shows progress.
+
+---
+
+### Docker Issues
+
+**Error:** `docker: command not found`
+
+**Solution:** Install Docker Desktop from https://www.docker.com/products/docker-desktop
+
+**Error:** `Cannot connect to the Docker daemon`
+
+**Solution:** Start Docker Desktop application. On Windows/Mac, check the system tray icon to ensure Docker is running.
+
+**Error:** Container name already in use
+
+**Solution:** Remove the existing container:
+```bash
+docker rm -f hc-postgres
+# Then recreate it with the docker run command
+```
+
+---
+
+### Common Setup Mistakes
+
+**Problem:** Can't log in as admin
+
+**Check:**
+1. Did you create the admin account in the database? (Step 3 of setup)
+2. Are you using the correct credentials? (`admin@ung.edu` / `admin123`)
+3. Are you at the admin login page? (`http://localhost:3001/admin/login` not `/login`)
+
+**Problem:** Photos won't upload
+
+**Check:**
+1. Cloudinary credentials are set in backend `.env`
+2. Backend is running and accessible at `http://localhost:3000`
+3. Image file is under 20MB (compression handles up to ~20MB effectively)
+4. Browser console shows no CORS errors
+
+**Problem:** Can't see zones when uploading
+
+**Check:**
+1. Did you seed the zones data? (Step 3 of setup - zones INSERT statement)
+2. Backend API is running
+3. Check browser console for API errors
+
+---
+
+### Getting More Help
+
+If you're still stuck:
+
+1. Check the browser console (F12 → Console tab) for error messages
+2. Check the backend terminal for server errors
+3. Verify all environment variables are set correctly
+4. Try the Quick Start Checklist at the top of this README
 
 ## 📊 Project Status
 
